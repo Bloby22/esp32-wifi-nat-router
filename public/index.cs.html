@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0878bd">
+  <title>ESP Connect | Wi-Fi NAT router</title>
+  <link rel="stylesheet" href="/style.css?v=4">
+</head>
+<body class="app-shell">
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="ESP Connect – úvod">
+      <span class="brand-mark">ESP</span>
+      <span class="brand-name">ESP Connect<span>WI-FI NAT ROUTER</span></span>
+    </a>
+    <div class="header-status">
+      <span class="status-indicator" aria-hidden="true"></span>
+      <span>{{NAT_STATUS}}</span>
+      <code>192.168.4.1</code>
+    </div>
+  </header>
+
+  <main class="dashboard">
+    <section class="hero" aria-labelledby="page-title">
+      <p class="eyebrow">DOMŮ&nbsp; &gt;&nbsp; STAV SÍTĚ</p>
+      <div class="hero-copy">
+        <h1 id="page-title">Stav Wi-Fi NAT routeru</h1>
+        <p>ESP se připojí k domácí Wi-Fi a sdílí internet přes svou vlastní síť.</p>
+      </div>
+    </section>
+
+    <div class="workspace">
+      <nav class="section-nav" aria-label="Sekce stránky">
+        <span class="nav-caption">HLAVNÍ MENU</span>
+        <a class="nav-active" href="#status"><span aria-hidden="true">⌂</span>Stav routeru</a>
+        <a href="#wireless"><span aria-hidden="true">◉</span>Nastavení Wi-Fi</a>
+        <div class="nav-device"><span class="status-indicator" aria-hidden="true"></span>ESP32-C3</div>
+      </nav>
+
+      <div class="content-grid">
+        <section class="panel status-panel" id="status" aria-labelledby="status-title">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">PŘEHLED</p>
+              <h2 id="status-title">Připojení</h2>
+            </div>
+            <span class="panel-chip">{{UPSTREAM_STATUS}}</span>
+          </div>
+          <dl class="status-list">
+            <div class="status-item">
+              <dt>IP domácí sítě</dt>
+              <dd><code>{{STA_IP}}</code></dd>
+            </div>
+            <div class="status-item">
+              <dt>IP vlastní Wi-Fi</dt>
+              <dd><code>{{AP_IP}}</code></dd>
+            </div>
+            <div class="status-item">
+              <dt>Domácí Wi-Fi</dt>
+              <dd>{{UPSTREAM_SSID}}</dd>
+            </div>
+            <div class="status-item">
+              <dt>Vlastní Wi-Fi <span>(SSID)</span></dt>
+              <dd class="ssid-value">{{SSID}}</dd>
+            </div>
+            <div class="status-item">
+              <dt>Přesměrování NAPT</dt>
+              <dd>{{NAT_STATUS}}</dd>
+            </div>
+            <div class="status-item">
+              <dt>Připojená zařízení</dt>
+              <dd>{{CLIENTS}}</dd>
+            </div>
+            <div class="status-item">
+              <dt>Kanál Wi-Fi <span>(sdílené rádio)</span></dt>
+              <dd>{{CHANNEL}}</dd>
+            </div>
+            <div class="status-item">
+              <dt>Doba provozu <span>(s)</span></dt>
+              <dd>{{UPTIME}}</dd>
+            </div>
+            <div class="status-item">
+              <dt>Volná paměť <span>(kB)</span></dt>
+              <dd>{{FREE_HEAP}}</dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="panel settings-panel" id="wireless" aria-labelledby="settings-title">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">PŘIPOJENÍ A ZABEZPEČENÍ</p>
+              <h2 id="settings-title">Nastavení sítí</h2>
+            </div>
+            <span class="panel-index">NAT</span>
+          </div>
+          <p class="panel-intro">Zadejte údaje domácí Wi-Fi a přihlašovací údaje vlastní sítě ESP. Po uložení se router restartuje.</p>
+          <form action="/save" method="POST">
+            <input type="hidden" name="csrf_token" value="{{CSRF_TOKEN}}">
+            <div class="form-group">
+              <label for="upstream_ssid">Název domácí Wi-Fi</label>
+              <input id="upstream_ssid" type="text" name="upstream_ssid" value="{{UPSTREAM_SSID}}" maxlength="32" data-byte-min="1" data-byte-max="32" autocomplete="off" required>
+              <small>1 až 32 bajtů v kódování UTF-8.</small>
+            </div>
+            <div class="form-group">
+              <label for="upstream_password">Heslo domácí Wi-Fi</label>
+              <input id="upstream_password" type="password" name="upstream_password" maxlength="63" data-byte-min="8" data-byte-max="63" data-byte-optional autocomplete="new-password">
+              <small>8 až 63 bajtů. Pro zachování hesla neměňte název sítě a pole nechte prázdné.</small>
+              <label class="check-option"><input type="checkbox" name="upstream_open" value="1"> Domácí síť je otevřená, bez hesla</label>
+            </div>
+            <div class="form-group">
+              <label for="new_ssid">Název vlastní Wi-Fi (SSID)</label>
+              <input id="new_ssid" type="text" name="new_ssid" value="{{SSID}}" maxlength="32" data-byte-min="1" data-byte-max="32" autocomplete="off" required>
+              <small>1 až 32 bajtů v kódování UTF-8.</small>
+            </div>
+            <div class="form-group">
+              <label for="new_password">Heslo vlastní Wi-Fi</label>
+              <input id="new_password" type="password" name="new_password" maxlength="63" data-byte-min="8" data-byte-max="63" data-byte-optional autocomplete="new-password">
+              <small>8 až 63 bajtů. Pro zachování hesla neměňte název sítě a pole nechte prázdné.</small>
+            </div>
+            <button class="submit-button" type="submit">Uložit a restartovat</button>
+          </form>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer"><span>ESP CONNECT</span><span>WI-FI NAT ROUTER&nbsp; · &nbsp;ESP32-C3</span></footer>
+  <script>
+    const networkInputs = document.querySelectorAll("[data-byte-max]");
+    const isCzech = document.documentElement.lang === "cs";
+
+    networkInputs.forEach((input) => {
+      const validateBytes = () => {
+        const byteLength = new TextEncoder().encode(input.value).length;
+        const minimum = Number(input.dataset.byteMin);
+        const maximum = Number(input.dataset.byteMax);
+
+        if (input.dataset.byteOptional !== undefined && input.value.length === 0) {
+          input.setCustomValidity("");
+        } else if (byteLength < minimum || byteLength > maximum) {
+          input.setCustomValidity(isCzech
+            ? `Zadejte ${minimum} až ${maximum} bajtů v kódování UTF-8.`
+            : `Enter ${minimum} to ${maximum} bytes in UTF-8 encoding.`);
+        } else {
+          input.setCustomValidity("");
+        }
+      };
+
+      input.addEventListener("input", validateBytes);
+      validateBytes();
+    });
+  </script>
+</body>
+</html>
