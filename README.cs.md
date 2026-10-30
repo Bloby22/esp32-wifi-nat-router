@@ -1,4 +1,4 @@
-# # ESP32 Wi-Fi NAT Router
+# ESP32 Wi-Fi NAT Router
 
 [![Licence: MIT](https://shields.io)](LICENSE)
 [![PlatformIO](https://shields.io)](https://platformio.org)
