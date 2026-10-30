@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0878bd">
+  <title>ESP Connect | Wi-Fi NAT Router</title>
+  <link rel="stylesheet" href="/style.css?v=4">
+</head>
+<body class="app-shell">
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="ESP Connect home">
+      <span class="brand-mark">ESP</span>
+      <span class="brand-name">ESP Connect<span>WI-FI NAT ROUTER</span></span>
+    </a>
+    <div class="header-status">
+      <span class="status-indicator" aria-hidden="true"></span>
+      <span>{{NAT_STATUS}}</span>
+      <code>192.168.4.1</code>
+    </div>
+  </header>
+
+  <main class="dashboard">
+    <section class="hero" aria-labelledby="page-title">
+      <p class="eyebrow">HOME&nbsp; &gt;&nbsp; NETWORK STATUS</p>
+      <div class="hero-copy">
+        <h1 id="page-title">Wi-Fi NAT router status</h1>
+        <p>Connect the ESP to your home Wi-Fi and share internet through its own network.</p>
+      </div>
+    </section>
+
+    <div class="workspace">
+      <nav class="section-nav" aria-label="Page sections">
+        <span class="nav-caption">MAIN MENU</span>
+        <a class="nav-active" href="#status"><span aria-hidden="true">⌂</span>Router status</a>
+        <a href="#wireless"><span aria-hidden="true">◉</span>Wi-Fi settings</a>
+        <div class="nav-device"><span class="status-indicator" aria-hidden="true"></span>ESP32-C3</div>
+      </nav>
+
+      <div class="content-grid">
+        <section class="panel status-panel" id="status" aria-labelledby="status-title">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">OVERVIEW</p>
+              <h2 id="status-title">Connection</h2>
+            </div>
+            <span class="panel-chip">{{UPSTREAM_STATUS}}</span>
+          </div>
+          <dl class="status-list">
+            <div class="status-item">
+              <dt>Home network IP</dt>
+              <dd><code>{{STA_IP}}</code></dd>
+            </div>
+            <div class="status-item">
+              <dt>ESP Wi-Fi IP</dt>
+              <dd><code>{{AP_IP}}</code></dd>
+            </div>
+            <div class="status-item">
+              <dt>Home Wi-Fi</dt>
+              <dd>{{UPSTREAM_SSID}}</dd>
+            </div>
+            <div class="status-item">
+              <dt>ESP Wi-Fi <span>(SSID)</span></dt>
+              <dd class="ssid-value">{{SSID}}</dd>
+            </div>
+            <div class="status-item">
+              <dt>NAPT forwarding</dt>
+              <dd>{{NAT_STATUS}}</dd>
+            </div>
+            <div class="status-item">
+              <dt>Connected devices</dt>
+              <dd>{{CLIENTS}}</dd>
+            </div>
+            <div class="status-item">
+              <dt>Wi-Fi channel <span>(shared radio)</span></dt>
+              <dd>{{CHANNEL}}</dd>
+            </div>
+            <div class="status-item">
+              <dt>Uptime <span>(seconds)</span></dt>
+              <dd>{{UPTIME}}</dd>
+            </div>
+            <div class="status-item">
+              <dt>Free memory <span>(kB)</span></dt>
+              <dd>{{FREE_HEAP}}</dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="panel settings-panel" id="wireless" aria-labelledby="settings-title">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">CONNECTION AND SECURITY</p>
+              <h2 id="settings-title">Network settings</h2>
+            </div>
+            <span class="panel-index">NAT</span>
+          </div>
+          <p class="panel-intro">Enter your home Wi-Fi credentials and the credentials for the ESP network. The router restarts after saving.</p>
+          <form action="/save" method="POST">
+            <input type="hidden" name="csrf_token" value="{{CSRF_TOKEN}}">
+            <div class="form-group">
+              <label for="upstream_ssid">Home Wi-Fi name</label>
+              <input id="upstream_ssid" type="text" name="upstream_ssid" value="{{UPSTREAM_SSID}}" maxlength="32" data-byte-min="1" data-byte-max="32" autocomplete="off" required>
+              <small>1 to 32 bytes in UTF-8 encoding.</small>
+            </div>
+            <div class="form-group">
+              <label for="upstream_password">Home Wi-Fi password</label>
+              <input id="upstream_password" type="password" name="upstream_password" maxlength="63" data-byte-min="8" data-byte-max="63" data-byte-optional autocomplete="new-password">
+              <small>8 to 63 bytes. Keep the network name unchanged and leave blank to keep the saved password.</small>
+              <label class="check-option"><input type="checkbox" name="upstream_open" value="1"> Home network is open (no password)</label>
+            </div>
+            <div class="form-group">
+              <label for="new_ssid">ESP Wi-Fi name (SSID)</label>
+              <input id="new_ssid" type="text" name="new_ssid" value="{{SSID}}" maxlength="32" data-byte-min="1" data-byte-max="32" autocomplete="off" required>
+              <small>1 to 32 bytes in UTF-8 encoding.</small>
+            </div>
+            <div class="form-group">
+              <label for="new_password">ESP Wi-Fi password</label>
+              <input id="new_password" type="password" name="new_password" maxlength="63" data-byte-min="8" data-byte-max="63" data-byte-optional autocomplete="new-password">
+              <small>8 to 63 bytes. Keep the network name unchanged and leave blank to keep the saved password.</small>
+            </div>
+            <button class="submit-button" type="submit">Save and restart</button>
+          </form>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer"><span>ESP CONNECT</span><span>WI-FI NAT ROUTER&nbsp; · &nbsp;ESP32-C3</span></footer>
+  <script>
+    const networkInputs = document.querySelectorAll("[data-byte-max]");
+    const isCzech = document.documentElement.lang === "cs";
+
+    networkInputs.forEach((input) => {
+      const validateBytes = () => {
+        const byteLength = new TextEncoder().encode(input.value).length;
+        const minimum = Number(input.dataset.byteMin);
+        const maximum = Number(input.dataset.byteMax);
+
+        if (input.dataset.byteOptional !== undefined && input.value.length === 0) {
+          input.setCustomValidity("");
+        } else if (byteLength < minimum || byteLength > maximum) {
+          input.setCustomValidity(isCzech
+            ? `Zadejte ${minimum} až ${maximum} bajtů v kódování UTF-8.`
+            : `Enter ${minimum} to ${maximum} bytes in UTF-8 encoding.`);
+        } else {
+          input.setCustomValidity("");
+        }
+      };
+
+      input.addEventListener("input", validateBytes);
+      validateBytes();
+    });
+  </script>
+</body>
+</html>
