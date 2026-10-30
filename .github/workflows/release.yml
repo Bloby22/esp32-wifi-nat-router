@@ -1,0 +1,119 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  envs:
+    name: List environments
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.list.outputs.matrix }}
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Read environments from platformio.ini
+        id: list
+        run: |
+          python3 - <<'EOF' >> "$GITHUB_OUTPUT"
+          import configparser, json, sys
+          cp = configparser.ConfigParser(interpolation=None, strict=False)
+          cp.read("platformio.ini")
+          envs = [s[4:] for s in cp.sections() if s.startswith("env:")]
+          if not envs:
+              sys.exit("No [env:...] sections found in platformio.ini")
+          print("matrix=" + json.dumps({"env": envs}))
+          EOF
+
+  build:
+    name: Build (${{ matrix.env }})
+    needs: envs
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix: ${{ fromJSON(needs.envs.outputs.matrix) }}
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache PlatformIO packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio/.cache
+            ~/.platformio/packages
+            ~/.platformio/platforms
+          key: pio-${{ runner.os }}-${{ hashFiles('platformio.ini') }}
+          restore-keys: |
+            pio-${{ runner.os }}-
+
+      - name: Install PlatformIO
+        run: pip install --upgrade platformio
+
+      - name: Build firmware
+        run: pio run -e ${{ matrix.env }}
+
+      - name: Build LittleFS image
+        run: pio run -e ${{ matrix.env }} --target buildfs
+
+      - name: Collect release files
+        env:
+          BOARD: ${{ matrix.env }}
+        run: |
+          mkdir -p dist
+          for part in firmware littlefs bootloader partitions; do
+            cp ".pio/build/${BOARD}/${part}.bin" "dist/${BOARD}-${part}.bin"
+          done
+
+      - name: Upload build files
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.env }}
+          path: dist/*
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download build files
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: dist-*
+          merge-multiple: true
+
+      - name: Create checksums
+        working-directory: dist
+        run: sha256sum *.bin > SHA256SUMS.txt
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          flags=""
+          if [[ "$TAG" == *-* ]]; then
+            flags="--prerelease"
+          fi
+          gh release create "$TAG" dist/* \
+            --repo "$REPO" \
+            --title "$TAG" \
+            --generate-notes \
+            $flags
