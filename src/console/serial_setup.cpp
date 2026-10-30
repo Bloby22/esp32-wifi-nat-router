@@ -12,19 +12,25 @@ namespace {
 /// Handles both "\n" and "\r\n" line endings.
 String readSerialLine() {
     String input;
+
     while (true) {
         while (Serial.available() == 0) {
             delay(config::SERIAL_POLL_DELAY_MS);
         }
+
         const char c = static_cast<char>(Serial.read());
-        if (c == '\n') {
-            break;
+
+        if (c == '\n' || c == '\r') {
+            Serial.printf(
+                "\n[INPUT DEBUG] Received %u bytes.\n",
+                static_cast<unsigned>(input.length())
+            );
+
+            return input;
         }
-        if (c != '\r') {
-            input += c;
-        }
+
+        input += c;
     }
-    return input;
 }
 
 /// A Wi-Fi name must be 1-32 bytes (UTF-8 bytes, not characters).
@@ -104,9 +110,9 @@ void readUpstreamSettings() {
         "🏠 First up: what's your home Wi-Fi called? (1-32 UTF-8 bytes)",
         "🏠 Nejdřív: jak se jmenuje tvoje domácí Wi-Fi? (1-32 bajtů UTF-8)");
     accessPointSettings.upstreamPassword = readNetworkPassword(
-        "🔑 And its password? (8-63 bytes, or just hit Enter if it's open)",
-        "🔑 A jaké má heslo? (8-63 bajtů, nebo jen Enter, když je otevřená)",
-        true);
+        "🔑 And its password? (8-63 bytes)",
+        "🔑 A jaké má heslo? (8-63 bajtů)",
+        false);
 }
 
 void readAccessPointSettings() {
