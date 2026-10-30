@@ -1,6 +1,8 @@
 #include "access_point/settings.h"
 
 #include <Preferences.h>
+#include <nvs_flash.h>
+#include <esp_err.h>
 #include <cstring>
 
 namespace {
@@ -38,9 +40,18 @@ bool isValidUpstreamCredentials(
 
 SettingsLoadResult loadAccessPointSettings() {
     Preferences preferences;
-    if (!preferences.begin(PREFERENCES_NAMESPACE, true)) {
+    esp_err_t nvsResult = nvs_flash_init();
+    Serial.printf(
+        "[NVS DEBUG] nvs_flash_init: %s (%d)\n",
+        esp_err_to_name(nvsResult),
+        static_cast<int>(nvsResult));
+
+    if (!preferences.begin(PREFERENCES_NAMESPACE, false)) {
+        Serial.println("[NVS DEBUG] preferences.begin() failed.");
         return SettingsLoadResult::StorageError;
     }
+
+    Serial.println("[NVS DEBUG] preferences.begin() succeeded.");
 
     const size_t storedLength = preferences.getBytesLength(CREDENTIALS_KEY);
     if (storedLength == 0) {
@@ -60,6 +71,10 @@ SettingsLoadResult loadAccessPointSettings() {
     preferences.end();
 
     if (bytesRead != storedLength) {
+        Serial.printf(
+            "[NVS DEBUG] getBytes() failed: expected %u, got %u.\n",
+            static_cast<unsigned>(storedLength),
+            static_cast<unsigned>(bytesRead));
         return SettingsLoadResult::StorageError;
     }
 
