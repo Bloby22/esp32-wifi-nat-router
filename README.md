@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PlatformIO](https://img.shields.io/badge/built%20with-PlatformIO-orange.svg)](https://platformio.org/)
 [![Framework: Arduino](https://img.shields.io/badge/framework-Arduino-00979D.svg)](https://www.arduino.cc/)
-[![Build](https://github.com/Bloby22/esp32-wifi-nat-router/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/Bloby22/esp32-wifi-nat-router/actions/workflows/build.yml)
+[![Build](https://github.com/Bloby22/esp32-wifi-nat-router/actions/workflows/build.yml/badge.svg)](https://github.com/Bloby22/esp32-wifi-nat-router/actions/workflows/build.yml)
 
 A tiny Wi-Fi NAT router for the ESP32. The board joins your home
 Wi-Fi as a client and shares that connection through its own password-protected
